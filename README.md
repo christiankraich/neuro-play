@@ -1,0 +1,1 @@
+Projeto prático utilizando IA integrada para disciplina de **Usabilidade e Desenvolvimento Web**
