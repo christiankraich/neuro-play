@@ -1,12 +1,11 @@
 import express from 'express'
 import { GoogleGenAI, Type } from '@google/genai'
-import 'dotenv/config' // carrega as variáveis do .env de forma segura
+import 'dotenv/config'
 import { atividades } from './atividades.js'
 
 const app = express()
 const port = process.env.PORT || 3000
 
-// permite que o express entenda requisições no formato JSON enviadas pelo app web
 app.use(express.json())
 
 // inicializa o gemini usando a chave guardada no .env
@@ -20,8 +19,9 @@ app.post('/api/atividade', async (req, res) => {
         const nivelTea = perfilCrianca.nivel_tea;
         const interesses = perfilCrianca.interesses || [];
         const evitacoes = perfilCrianca.evitacoes || [];
+        // FALTA objetivos da familia
 
-        // busca no arquivo local (ver se da match)
+        // busca no arquivo local pra ver se da match
         const atividadeLocalEncontrada = atividades.filter(ativ => {
             // regra 1: A idade da criança precisa estar dentro da faixa etária da atividade
             const idadeCompativel = idade >= ativ.faixa_etaria.min && idade <= ativ.faixa_etaria.max;
@@ -59,7 +59,6 @@ app.post('/api/atividade', async (req, res) => {
             return res.status(200).json({...atividadeLocalEncontrada, gerado_por: "Banco de Dados Local (atividades.js)"})
         }
 
-        // se nao encontrar avisa e chama o gemini
         console.log("[Aviso] Nenhuma atividade local serviu perfeitamente. Gemini acionado.")
 
         //esquema de validação do JSON
