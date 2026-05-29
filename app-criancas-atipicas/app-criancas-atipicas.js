@@ -6,13 +6,12 @@ import { atividades } from './atividades.js'
 const app = express()
 const port = process.env.PORT || 3000
 
-// permite que o express entenda requisições no formato JSON enviadas pelo seu app web
+// permite que o express entenda requisições no formato JSON enviadas pelo app web
 app.use(express.json())
 
 // inicializa o gemini usando a chave guardada no .env
 const ai = new GoogleGenAI({ apiKey: process.env.GEMINI_API_KEY })
 
-// rota que o app web vai chamar
 app.post('/api/atividade', async (req, res) => {
     try {
         //pega os dados que o usuário enviou do formulário do site
@@ -24,19 +23,19 @@ app.post('/api/atividade', async (req, res) => {
 
         // busca no arquivo local (ver se da match)
         const atividadeLocalEncontrada = atividades.filter(ativ => {
-            // regra A: A idade da criança precisa estar dentro da faixa etária da atividade
+            // regra 1: A idade da criança precisa estar dentro da faixa etária da atividade
             const idadeCompativel = idade >= ativ.faixa_etaria.min && idade <= ativ.faixa_etaria.max;
 
-            // regra B: A atividade precisa suportar o nível de TEA da criança
+            // regra 2: A atividade precisa suportar o nível de TEA da criança
             const nivelTeaCompativel = ativ.nivel_tea.includes(nivelTea);
 
-            // regra C: A atividade NÃO pode conter coisas que a criança evitar
-            // se alguma tag ou material da atividade estiver na lista de 'evitacoes', a gente descarta
+            // regra 3: A atividade NÃO pode conter coisas que a criança evitar
+            // se alguma tag ou material da atividade estiver na lista de 'evitacoes', descarta
             const listaEvitacoesMinusculo = evitacoes.map(e => e.toLowerCase().trim());
             const contemAlgoAEvitar = ativ.evitar_se.some(e => listaEvitacoesMinusculo.includes(e.toLowerCase().trim())) || 
                                       ativ.tags.some(t => listaEvitacoesMinusculo.includes(t.toLowerCase().trim()));
 
-            // regra D: verifica se tem alguma área de interesse batendo com os interesses da criança
+            // regra 4: verifica se tem alguma área de interesse batendo com os interesses da criança
             let interesseCompativel = true;
             if (interesses.length > 0) {
                 const listaInteressesMinusculo = interesses.map(i => i.toLowerCase().trim());
@@ -46,6 +45,8 @@ app.post('/api/atividade', async (req, res) => {
                     listaInteressesMinusculo.includes(tag.toLowerCase().trim())
                 ); 
             }
+
+            // regra 5: verifica os objetivos da familia ------- FALTA
 
             // retorna verdadedeiro se a idade e nivel TEA forem compatíveis, não for perigoso E bater o interesse
             return idadeCompativel && nivelTeaCompativel && !contemAlgoAEvitar && interesseCompativel;
@@ -105,10 +106,10 @@ app.post('/api/atividade', async (req, res) => {
             - Evitar: ${perfilCrianca.evitacoes?.join(", ")}`
         })
 
-        // converte o texto que o gemini mandou em JSON puro
+        // converte o texto que o gemini mandou em JSON
         const atividadeFinal = JSON.parse(response.text)
 
-        // devolve o JSON preenchido para o seu aplicativo web com status 200
+        // devolve o JSON preenchido
         return res.status(200).json(atividadeFinal)
 
     } catch (error) {
@@ -117,7 +118,7 @@ app.post('/api/atividade', async (req, res) => {
     }
 })
 
-// inicializa o servidor para ficar "ouvindo" as requisições na porta 3000
+// inicializa o servidor na porta 3000
 app.listen(port, () => {
     console.log(`Servidor rodando com sucesso em http://localhost:${port}`)
 })
